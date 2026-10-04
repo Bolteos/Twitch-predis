@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Promo · Cartas de Alicia en el País de las Maravillas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:transparent}
+.st{position:absolute;left:0;top:5%;width:100%;display:flex;flex-direction:column;align-items:center;gap:22px}
+.avx{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.ph{display:grid;place-items:center;background:#e8d9ae;color:#24507a;font:700 80px 'Cinzel Decorative',Georgia,serif}
+.mc{position:absolute;top:0;pointer-events:none;filter:drop-shadow(0 4px 6px #0008);width:68px;height:98px;border-radius:9px;display:grid;place-items:center;font-size:52px;box-sizing:border-box;border:3px solid}
+/* Carta */
+.cw{perspective:1200px;width:260px;height:380px}.fl{position:relative;width:100%;height:100%;transform-style:preserve-3d}
+.cf{position:absolute;inset:0;border-radius:16px;border:6px solid #d8aa2c;box-sizing:border-box;backface-visibility:hidden;box-shadow:0 10px 24px #000a;overflow:hidden}
+.bk{transform:rotateY(180deg);border-color:#1b1b2b;background:linear-gradient(45deg,#ffffff33 25%,transparent 25% 75%,#ffffff33 75%),linear-gradient(-45deg,#ffffff33 25%,transparent 25% 75%,#ffffff33 75%),#a3141f;background-size:32px 32px}
+.ft{background:radial-gradient(circle at 50% 40%,#2a2733,#0d0c12)}
+.k{position:absolute;font:700 30px/1 'Cinzel Decorative',Georgia,serif;font-style:normal;color:#e8e8f0}
+.k1{top:10px;left:16px}.k2{bottom:10px;right:16px;transform:rotate(180deg)}
+.fr{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;fill:none;stroke:#d8aa2c;stroke-width:2;stroke-linejoin:round}
+.ov{position:absolute;left:50%;top:50%;width:190px;height:190px;transform:translate(-50%,-50%);border-radius:50%;border:6px solid #c9ccd8;box-shadow:0 0 0 3px #d8aa2c;overflow:hidden}
+/* Mensaje (igual que la carta 1) */
+.bx{position:relative;width:fit-content;min-width:460px;max-width:640px;box-sizing:border-box;padding:20px 34px;text-align:center;color:#fff4dc;background:repeating-linear-gradient(90deg,#7d1424 0 30px,#a02a3a 30px 60px);border:5px double #d8aa2c;border-radius:16px;box-shadow:0 0 0 3px #0006,0 12px 30px #000a;opacity:0}
+.bx .l1,.bx .l2{white-space:nowrap}
+.bx .l1{font:italic 30px 'IM Fell English',Georgia,serif;text-shadow:0 2px 4px #000a}
+.bx .n{display:block;font:700 56px/1.1 'Cinzel Decorative',Georgia,serif;color:#ffe08a;text-shadow:0 2px 4px #000a;margin:4px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx .l2{font:26px/1.3 'IM Fell English',Georgia,serif;text-shadow:0 2px 4px #000a}
+</style></head><body>
+<script>
+/* ====== CONFIGURACIÓN ====== */
+const P=new URLSearchParams(location.search);
+const CFG={
+ canal:(P.get('canal')||'Bolteos').toLowerCase(), // <-- tu canal de Twitch
+ comando:'!promo',
+ sonido:P.get('sonido')||'1', // 1 = grabación | 2 = acordeón | 0 = sonido sintético original
+ volumen:parseFloat(P.get('volumen')||'0.8'),
+ soloMods:true,
+ duracion:10000,
+ marco:P.get('marco')||'6', // 6 = sin marco (por defecto) | 1-7 | aleatorio
+ l1:'¡Por orden de las Reinas Rojas!',
+ gracias:'Visiten este canal y denle amor'};
+/* Chat:  !promo @usuario   ó   !promo @usuario 3   (elige el marco 1-7) */
+
+/* ====== MARCOS DE ROSAS Y ESPINAS (SVG 248x368) ====== */
+const base='<rect x="7" y="7" width="234" height="354" rx="6"/><rect x="11" y="11" width="226" height="346" rx="3" stroke-width="1"/>';
+const rep=(a,b,st,f)=>{let o='';for(let v=a;v<=b;v+=st)o+=f(v);return o};
+const th=(x,y,d,s=6)=>`<path d="M0 -3L${s} 0L0 3Z" fill="#d8aa2c" transform="translate(${x} ${y}) rotate(${d})"/>`;
+const sideTh=(a,b,st,s)=>rep(a,b,st,y=>th(12,y,0,s)+th(236,y,180,s));
+const topTh=(a,b,st,s)=>rep(a,b,st,x=>th(x,12,90,s)+th(x,356,-90,s));
+const rose=(x,y,s=1,f='#c0262d')=>`<g transform="translate(${x} ${y}) scale(${s})" stroke-width="1.2"><ellipse cx="-12" cy="6" rx="7" ry="3.5" fill="#2f6b3a" transform="rotate(-30 -12 6)"/><ellipse cx="12" cy="6" rx="7" ry="3.5" fill="#2f6b3a" transform="rotate(30 12 6)"/><circle r="10" fill="${f}"/><path d="M0 -6Q6 -6 6 0Q6 6 0 6Q-5 6 -5 1Q-5 -3 -1 -3Q2 -3 2 0"/></g>`;
+const vine=d=>`<path d="${d}" stroke="#3f8a4f" stroke-width="2.5"/>`;
+const drip=x=>`<path d="M${x} 12v16a3 3 0 0 0 6 0V12" fill="#c0262d" stroke="none"/>`;
+const WH='#fff8ea',RD='#c0262d';
+const FR=[
+ /* 1 · Espinas y rosas */
+ base+sideTh(76,292,20,7)+topTh(88,160,18,6)+rose(204,44,1.5)+rose(44,324,1.5),
+ /* 2 · Enredadera de rosas */
+ base+vine('M15 50Q23 70 15 90T15 130T15 170T15 210T15 250T15 290T15 330')+vine('M233 50Q241 70 233 90T233 130T233 170T233 210T233 250T233 290T233 330')+
+ vine('M52 15Q60 24 68 15T84 15T100 15T116 15T132 15T148 15')+vine('M96 353Q104 344 112 353T128 353T144 353T160 353T176 353T192 353')+
+ sideTh(70,300,30,5)+rose(204,44,1.5)+rose(44,324,1.5)+rose(15,184,.75)+rose(233,184,.75),
+ /* 3 · Gótico espinoso */
+ base+sideTh(56,150,28,10)+sideTh(218,312,28,10)+topTh(52,100,16,8)+topTh(148,196,16,8)+rose(124,26,1.4)+rose(124,342,1.4)+rose(17,184,.8)+rose(231,184,.8)+
+ '<path d="M206 20l9 12l-9 12l-9-12zM42 324l9 12l-9 12l-9-12z" fill="#d8aa2c"/>',
+ /* 4 · Alicia: rosas pintadas */
+ base+rose(66,24,.9,WH)+rose(124,24,.9,RD)+rose(182,24,.9,WH)+rose(66,344,.9,RD)+rose(124,344,.9,WH)+rose(182,344,.9,RD)+
+ rose(16,130,.8,WH)+rose(232,130,.8,RD)+rose(16,238,.8,RD)+rose(232,238,.8,WH)+drip(95)+drip(153)+drip(210),
+ /* 5 · Alicia: naipes y cerradura */
+ base+'<text x="124" y="31" text-anchor="middle" font-size="15" fill="#d8aa2c" stroke="none" letter-spacing="8">♠ ♥ ♣ ♦</text><text x="124" y="354" text-anchor="middle" font-size="15" fill="#d8aa2c" stroke="none" letter-spacing="8">♦ ♣ ♥ ♠</text>'+
+ sideTh(76,292,24,6)+rose(204,50,1.4)+rose(44,318,1.4)+
+ '<circle cx="17" cy="180" r="4" fill="#d8aa2c"/><path d="M15 182L19 182L20 192L14 192Z" fill="#d8aa2c"/><circle cx="231" cy="180" r="4" fill="#d8aa2c"/><path d="M229 182L233 182L234 192L228 192Z" fill="#d8aa2c"/>',
+ /* 6 · Sin marco */
+ '',
+ /* 7 · Sin marco, A roja */
+ ''
+].map(b=>`<svg class="fr" viewBox="0 0 248 368">${b}</svg>`);
+const ACOL=['#e8e8f0','#e8e8f0','#e8e8f0','#e8e8f0','#e8e8f0','#e8e8f0','#d92d36'];
+
+/* ====== UTILIDADES ====== */
+const $q=(e,s)=>e.querySelector(s),mk=h=>{const d=document.createElement('div');d.innerHTML=h;return d.firstElementChild};
+function bx(u){const b=mk('<div class="bx"><div class="l1"></div><b class="n"></b><div class="l2"></div></div>');
+ $q(b,'.l1').textContent=CFG.l1;const n=$q(b,'.n');n.textContent='@'+u;n.style.fontSize='56px';
+ $q(b,'.l2').textContent=CFG.gracias.replace(/\{user\}/g,u);return b}
+const RAIN=['♠','♥','♦','♣'];
+function fly(n,dur){const W=innerWidth,H=innerHeight;
+ for(let i=0;i<n;i++){const ch=RAIN[i%4],e=document.createElement('div');e.textContent=ch;
+  e.className='mc';e.style.background='#fff8ea';e.style.borderColor='#1b1b2b';e.style.color=/[♥♦]/.test(ch)?'#c0262d':'#1b1b2b';
+  e.style.left=Math.random()*(W-90)+'px';document.body.append(e);
+  e.animate([{transform:'translateY(-140px) rotate(0deg)'},{transform:`translateY(${H+140}px) rotate(${(Math.random()-.5)*720}deg)`}],{duration:dur*(.6+Math.random()*.4),delay:Math.random()*dur*.4,fill:'both',easing:'linear'}).finished.then(()=>e.remove())}}
+
+/* ====== SONIDO ====== */
+const SND={1:'sonido-1-grabacion.mp3',2:'sonido-2-acordeon.mp3'};
+function snd(D){const f=SND[CFG.sonido];if(!f){sfx(1046,D);return}const a=new Audio(f);a.volume=Math.min(1,CFG.volumen);a.onerror=()=>sfx(1046,D);a.play().catch(()=>sfx(1046,D))}
+let AC;
+function sfx(f,D){try{AC=AC||new AudioContext();AC.resume();const t=AC.currentTime;
+ for(let i=0;i<18;i++){const n=AC.sampleRate*.04|0,b=AC.createBuffer(1,n,AC.sampleRate),x=b.getChannelData(0);for(let j=0;j<n;j++)x[j]=(Math.random()*2-1)*(1-j/n);
+  const s=AC.createBufferSource();s.buffer=b;const fl=AC.createBiquadFilter();fl.type='bandpass';fl.frequency.value=3500;fl.Q.value=1;const v=AC.createGain();v.gain.value=.2;s.connect(fl).connect(v).connect(AC.destination);s.start(t+i*.05)}
+ [f,f*1.5].forEach((fr,i)=>{const o=AC.createOscillator(),v=AC.createGain(),tt=t+D/1000*.2;o.frequency.value=fr;v.gain.setValueAtTime(i?.07:.12,tt);v.gain.exponentialRampToValueAtTime(.001,tt+1.4);o.connect(v).connect(AC.destination);o.start(tt);o.stop(tt+1.5)})}catch(e){}}
+
+/* ====== AVATAR (decapi.me) ====== */
+const avatar=async u=>{try{const t=(await(await fetch('https://decapi.me/twitch/avatar/'+encodeURIComponent(u))).text()).trim();return/^https?:/.test(t)?t:''}catch(e){return''}};
+async function mkAv(u){const url=await avatar(u);let im;if(url){im=new Image();im.src=url;await new Promise(r=>{im.onload=im.onerror=r})}
+ if(!im||!im.naturalWidth){im=document.createElement('div');im.className='ph';im.textContent=u[0].toUpperCase()}im.classList.add('avx');return im}
+
+/* ====== ALERTA ====== */
+async function show(u,m){
+ const D=CFG.duracion,A=await mkAv(u);
+ const st=mk('<div class="st"></div>'),
+ cd=mk(`<div class="cw"><div class="fl"><div class="cf bk"></div><div class="cf ft">${FR[m]}<i class="k k1" style="color:${ACOL[m]}">A</i><i class="k k2" style="color:${ACOL[m]}">A</i><div class="ov"></div></div></div></div>`);
+ $q(cd,'.ov').append(A);const b=bx(u);st.append(cd,b);document.body.append(st);
+ {const n=$q(b,'.n');while(n.scrollWidth>n.clientWidth&&parseFloat(n.style.fontSize)>26)n.style.fontSize=parseFloat(n.style.fontSize)-2+'px'}
+ fly(16,D*.45);snd(D);
+ cd.animate([{transform:'translateY(-110vh) rotate(-540deg) scale(.4)'},{transform:'none'}],{duration:D*.22,easing:'cubic-bezier(.2,.9,.3,1.15)',fill:'both'});
+ cd.firstChild.animate([{transform:'rotateY(180deg)',offset:0},{transform:'rotateY(180deg)',offset:.14},{transform:'rotateY(0deg)',offset:.32},{transform:'rotateY(0deg)',offset:1}],{duration:D,fill:'both'});
+ b.animate([{opacity:0,transform:'translateY(24px) scale(.92)',offset:.3},{opacity:1,transform:'none',offset:.4},{opacity:1,transform:'none',offset:.82},{opacity:0,offset:.9}],{duration:D,fill:'both'});
+ await st.animate([{opacity:1,offset:0},{opacity:1,offset:.86},{opacity:0,offset:.96},{opacity:0,offset:1}],{duration:D,fill:'both'}).finished;st.remove()}
+
+const Q=[];let busy=false;
+const pick=s=>{const n=parseInt(s)-1;return n>=0&&n<FR.length?n:(parseInt(CFG.marco)>=1&&parseInt(CFG.marco)<=FR.length?parseInt(CFG.marco)-1:Math.random()*FR.length|0)};
+function push(u,s){Q.push([u,pick(s)]);if(!busy)next()}
+async function next(){busy=true;while(Q.length){const[u,m]=Q.shift();await show(u,m)}busy=false}
+
+/* ====== CHAT DE TWITCH (anónimo, solo lectura) ====== */
+function conectar(){
+ const ws=new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+ ws.onopen=()=>{ws.send('CAP REQ :twitch.tv/tags');ws.send('PASS SCHMOOPIIE');ws.send('NICK justinfan'+(1000+Math.random()*80000|0));ws.send('JOIN #'+CFG.canal)};
+ ws.onmessage=e=>e.data.split('\r\n').forEach(l=>{
+  if(!l)return;if(l.startsWith('PING')){ws.send('PONG :tmi.twitch.tv');return}
+  const m=l.match(/^(?:@(\S+) )?:\w+!\S+ PRIVMSG #\S+ :(.*)$/);if(!m)return;
+  const tg=Object.fromEntries((m[1]||'').split(';').map(x=>x.split('=')));
+  const ok=!CFG.soloMods||/broadcaster|moderator/.test(tg.badges||'')||tg.mod=='1';
+  const p=m[2].trim().split(/\s+/);
+  if(ok&&p[0].toLowerCase()===CFG.comando&&p[1]){const u=p[1].replace(/^@/,'').toLowerCase();if(/^\w{2,25}$/.test(u))push(u,p[2]||'')}});
+ ws.onclose=()=>setTimeout(conectar,3000)}
+conectar();
+if(P.get('test'))setTimeout(()=>push(P.get('test')),800);
+/* Pruebas en el navegador: teclas 1-7 = cada marco, T = aleatorio, A/S/D = sonido 1 / sonido 2 / sintético */
+addEventListener('keydown',e=>{const n=+e.key;if(n>=1&&n<=FR.length)push('alicia',String(n));else if(e.key.toLowerCase()=='t')push('alicia','');else if('asd'.includes(e.key.toLowerCase())){CFG.sonido={a:'1',s:'2',d:'0'}[e.key.toLowerCase()];push('alicia','6')}});
+</script></body></html>
