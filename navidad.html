@@ -67,6 +67,10 @@ code{background:#0d0f12;padding:2px 5px;border-radius:4px;font-size:12px;word-br
 /* ---------- tarjeta ---------- */
 .card{position:absolute;margin:24px;color:var(--t);font-family:var(--f);border-radius:var(--r);background:var(--bg);width:var(--w);padding:18px 20px;
  transition:opacity .4s;zoom:var(--zm,1);pointer-events:none}
+/* Fondo de rombos bicolor opcional: se repite dentro de ambas tarjetas,
+   sin ocupar el fondo transparente de OBS. */
+.card.diamond-on{background-color:transparent;background-image:var(--diamond-bg);background-repeat:repeat;
+ background-position:0 0;background-size:var(--diamond-size) var(--diamond-size)}
 .card.hide{opacity:0}
 .top-left{top:0;left:0}.top-right{top:0;right:0}.bottom-left{bottom:0;left:0}.bottom-right{bottom:0;right:0}
 .card .ttl{font-size:var(--ts);font-weight:700;line-height:1.2}
@@ -254,7 +258,7 @@ const DEF = {clientId:'',font:'Mountains of Christmas, cursive',fontCustom:'',bg
  iconA:'',iconB:'',iconC:'',iconD:'',upA:'',upB:'',upC:'',upD:'',iconSize:34,xA:null,yA:null,sA:1,xB:null,yB:null,sB:1,xC:null,yC:null,sC:1,xD:null,yD:null,sD:1,
  frame:'auto',frameColorOn:false,frameColor:'#d37bff',checkSize:14,zoomPred:1,zoomPoll:1,
  animBegin:'theme',animLock:'theme',animWin:'theme',animCancel:'theme',animOut:'fade',particles:true,
-  xSnow:true,xLights:true,xRibbon:true,xBanner:'ESPECIAL NAVIDAD'};
+  xSnow:true,xLights:true,xRibbon:true,xBanner:'ESPECIAL NAVIDAD',diamondOn:true,diamondAuto:true,diamondDark:'#0b2b22',diamondLight:'#265741',diamondSize:72};
 const THEMES = {
   navidad:{label:'🎄 Navidad clásica',a:'🎅',b:'🎁',c:'🎄',d:'⭐',fr:'xmas-gold',ae:'bounce',v:{bg:'#102c27',text:'#fff9e9',c1:'#eb484a',c2:'#24a37d',font:'Mountains of Christmas, cursive',radius:20},snd:{root:523.25,scale:[0,4,7,11,12],wave:'sine'}},
   nochebuena:{label:'🌟 Nochebuena dorada',a:'🌟',b:'🔔',c:'🕯️',d:'🎀',fr:'xmas-gold',ae:'drop',v:{bg:'#171c2b',text:'#fff3d0',c1:'#e5b45a',c2:'#c64151',font:'Cinzel Decorative, serif',radius:14},snd:{root:587.33,scale:[0,4,7,9,12],wave:'sine'}},
@@ -304,6 +308,13 @@ const FIELDS = [
  ['titleSize','Tamaño del título','range',14,48,1],
  ['bg','Fondo','color'],['text','Texto','color'],['c1','Color opción 1','color'],['c2','Color opción 2','color'],
  ['opacity','Opacidad del fondo','range',0,1,0.01],['radius','Bordes redondeados','range',0,40,1],
+ ['#','◇ Fondo de rombos (predicciones y encuestas)'],
+ ['diamondOn','Activar diseño de rombos','check'],
+ ['diamondAuto','Colores automáticos según el tema','check'],
+ ['!','Al elegir un tema, los rombos toman colores que combinan con él. Desactiva «Colores automáticos» para personalizar los dos tonos. También puedes ajustar el tamaño del patrón. Se aplica tanto a predicciones como a encuestas.'],
+ ['diamondDark','Color de rombo oscuro','color'],
+ ['diamondLight','Color de rombo claro','color'],
+ ['diamondSize','Tamaño de los rombos','range',32,128,4],
   ['#','Decoraciones navideñas'],
   ['xSnow','Nieve animada en la tarjeta','check'],
   ['xLights','Guirnalda de luces parpadeantes','check'],
@@ -367,9 +378,9 @@ const SK = {clientId:'id',font:'f',fontCustom:'fc',bg:'bg',text:'tx',c1:'c1',c2:
  xA:'xA',yA:'yA',sA:'sA',xB:'xB',yB:'yB',sB:'sB',xC:'xC',yC:'yC',sC:'sC',xD:'xD',yD:'yD',sD:'sD',
  frame:'fr',frameColorOn:'fo',frameColor:'fk',checkSize:'cs',zoomPred:'zp',zoomPoll:'zq',
  animBegin:'ab',animLock:'al',animWin:'aw',animCancel:'ac',animOut:'ao',particles:'pa',
- sndPBegin:'kb',sndPLock:'kl',sndPWin:'kw',sndPCancel:'kc',sndPOut:'ko',sndQBegin:'qb',sndQWin:'qw',sndQCancel:'qc',sndQOut:'qo',xSnow:'xs',xLights:'xg',xRibbon:'xr',xBanner:'xb'};
+ sndPBegin:'kb',sndPLock:'kl',sndPWin:'kw',sndPCancel:'kc',sndPOut:'ko',sndQBegin:'qb',sndQWin:'qw',sndQCancel:'qc',sndQOut:'qo',xSnow:'xs',xLights:'xg',xRibbon:'xr',xBanner:'xb',diamondOn:'dn',diamondAuto:'da',diamondDark:'dd',diamondLight:'dl',diamondSize:'ds'};
 const LK = Object.fromEntries(Object.entries(SK).map(([a, b]) => [b, a]));
-const COLORK = new Set(['bg', 'text', 'c1', 'c2', 'frameColor']), FONTV = FONTS.map(f => Array.isArray(f) ? f[0] : f);
+const COLORK = new Set(['bg', 'text', 'c1', 'c2', 'frameColor', 'diamondDark', 'diamondLight']), FONTV = FONTS.map(f => Array.isArray(f) ? f[0] : f);
 const baseOf = c => ({...DEF, ...(THEMES[c.theme || DEF.theme]?.v || {})});
 function toQuery(c) {
   const b = baseOf(c), p = [];
@@ -489,10 +500,34 @@ function frameCls(c) {
   if (f === 'auto') { const t = th(c); return t.fr ? (t.fr.startsWith('xmas-') ? 'fr-' + t.fr : 'chk fr-' + t.fr) : c.theme && c.theme !== 'none' ? 'th-' + c.theme : ''; }
   return THEMES[f] ? 'th-' + f : CHK.has(f) ? 'chk fr-' + f : 'fr-' + f;
 }
+// Paletas iniciales: el modo automático usa verdes para Navidad y combina
+// con los colores del tema en los demás diseños, sin cambiar el color del texto.
+const DIAMOND_PALETTES = {
+  navidad:['#0b2b22','#265741'],
+  nochebuena:['#172037','#344964'],
+  invierno:['#18334b','#32627b'],
+  dulces:['#3e2132','#783e57'],
+  bosque:['#09271d','#20503b']
+};
+function mixDiamondColor(a, b, weight) {
+  const rgb = h => [1,3,5].map(i => parseInt(String(h).slice(i,i+2), 16) || 0);
+  const x = rgb(a), y = rgb(b);
+  return '#' + x.map((v,i) => Math.round(v * (1-weight) + y[i] * weight).toString(16).padStart(2,'0')).join('');
+}
+function diamondColors(c) {
+  if (!c.diamondAuto) return [c.diamondDark || '#0b2b22', c.diamondLight || '#265741'];
+  return DIAMOND_PALETTES[c.theme] || [mixDiamondColor(c.bg, '#000000', .25), mixDiamondColor(c.bg, c.c1, .28)];
+}
+function diamondImage(c) {
+  const [dark, light] = diamondColors(c), alpha = Math.max(0, Math.min(1, Number(c.opacity)));
+  // Cada SVG es una casilla bicolor: rombos completos, no cuadrados inclinados.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><g opacity="${alpha}"><rect width="80" height="80" fill="${dark}"/><path d="M40 0 80 40 40 80 0 40Z" fill="${light}"/></g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
 function styleVars(c, kind) {
   const ff = String(c.fontCustom || '').trim().replace(/["'\\;{}]/g, ''), font = ff ? `'${ff}', ${c.font}` : c.font;
   const z = +(kind === 'poll' ? c.zoomPoll : c.zoomPred) || 1;
-  return `--bg:${hexA(c.bg, c.opacity)};--t:${c.text};--f:${font};--r:${c.radius}px;--w:${c.width}px;--ts:${c.titleSize}px;--is:${c.iconSize}px;--cs:${c.checkSize || 14}px;--zm:${z};` +
+  return `--bg:${hexA(c.bg, c.opacity)};--diamond-bg:${diamondImage(c)};--diamond-size:${Math.max(32,Math.min(128,Number(c.diamondSize)||72))}px;--t:${c.text};--f:${font};--r:${c.radius}px;--w:${c.width}px;--ts:${c.titleSize}px;--is:${c.iconSize}px;--cs:${c.checkSize || 14}px;--zm:${z};` +
     `--ab:${animFor(c,'begin')};--al:${animFor(c,'lock')};--aw:${animFor(c,'win')};--ac:${animFor(c,'cancel')};--ao:${animFor(c,'out')}` +
     (c.frameColorOn ? ';--fc:' + c.frameColor : '');
 }
@@ -504,7 +539,7 @@ function renderCard(host, p, c, force, kind) {
   if (!el) { el = document.createElement('div'); el.dataset.k = kind; host.appendChild(el); }
   const prev = force ? '' : el.dataset.st || '';
   const keep = ACLS.filter(k => el.classList.contains(k));
-  const base = 'card ' + (kind === 'poll' ? c.posPoll : c.pos) + ' ' + frameCls(c) + (c.anim ? '' : ' noanim');
+  const base = 'card ' + (kind === 'poll' ? c.posPoll : c.pos) + ' ' + frameCls(c) + (c.diamondOn ? ' diamond-on' : '') + (c.anim ? '' : ' noanim');
   el.setAttribute('style', styleVars(c, kind));
   if (!p) {
     const was = el.dataset.st; el.dataset.st = '';
@@ -741,13 +776,24 @@ function buildPanel() {
       INPUTS[k] = ti; l.appendChild(w); f.appendChild(l); f.appendChild(msg); return;
     }
     else { i = document.createElement('input'); i.type = type === 'check' ? 'checkbox' : type; if (type === 'range') { [i.min, i.max, i.step] = x; out = document.createElement('output'); } }
-    type === 'check' ? i.checked = cfg[k] : i.value = cfg[k];
+    type === 'check' ? i.checked = cfg[k] : i.value = (cfg.diamondAuto && (k === 'diamondDark' || k === 'diamondLight') ? diamondColors(cfg)[k === 'diamondDark' ? 0 : 1] : cfg[k]);
     if (out) out.textContent = cfg[k];
     INPUTS[k] = i;
     i.oninput = () => {
       cfg[k] = type === 'check' ? i.checked : type === 'color' || type === 'select' || type === 'text' ? i.value : +i.value;
       if (out) out.textContent = cfg[k];
       if (k === 'theme') { Object.assign(cfg, THEMES[cfg.theme].v || {}, {iconA:'', iconB:'', iconC:'', iconD:''}); refreshForm(); }
+      if (k === 'diamondAuto') {
+        if (!cfg.diamondAuto) [cfg.diamondDark, cfg.diamondLight] = diamondColors({...cfg, diamondAuto:true});
+        refreshForm();
+      }
+      if ((k === 'diamondDark' || k === 'diamondLight') && cfg.diamondAuto) {
+        const [dark, light] = diamondColors(cfg);
+        cfg.diamondDark = k === 'diamondDark' ? i.value : dark;
+        cfg.diamondLight = k === 'diamondLight' ? i.value : light;
+        cfg.diamondAuto = false;
+        refreshForm();
+      }
       update();
     };
     l.appendChild(i); if (out) l.appendChild(out); f.appendChild(l);
@@ -802,7 +848,10 @@ function initIconEdit(stage) {
   }, {passive: false});
 }
 function refreshForm() {
-  FIELDS.forEach(([kk,, tt, ...xx]) => { const n = INPUTS[kk]; if (!n) return; tt === 'check' ? n.checked = cfg[kk] : n.value = cfg[kk];
+  FIELDS.forEach(([kk,, tt, ...xx]) => { const n = INPUTS[kk]; if (!n) return;
+    const diamondIdx = kk === 'diamondDark' ? 0 : kk === 'diamondLight' ? 1 : -1;
+    const displayValue = diamondIdx >= 0 && cfg.diamondAuto ? diamondColors(cfg)[diamondIdx] : cfg[kk];
+    tt === 'check' ? n.checked = cfg[kk] : n.value = displayValue;
     if (tt === 'range' && n.nextSibling && n.nextSibling.tagName === 'OUTPUT') n.nextSibling.textContent = cfg[kk]; INPUTS['__' + kk]?.show(); });
 }
 // Mantener el nombre navidad.html en la URL de OBS (no volver al index).
