@@ -486,7 +486,7 @@ const CHK = new Set(['chess', 'chess2', 'queen', 'hatter', 'cheshire', 'rabbit',
 function frameCls(c) {
   const f = c.frame || 'auto';
   if (f === 'none') return '';
-  if (f === 'auto') { const t = th(c); return t.fr ? 'chk fr-' + t.fr : c.theme && c.theme !== 'none' ? 'th-' + c.theme : ''; }
+  if (f === 'auto') { const t = th(c); return t.fr ? (t.fr.startsWith('xmas-') ? 'fr-' + t.fr : 'chk fr-' + t.fr) : c.theme && c.theme !== 'none' ? 'th-' + c.theme : ''; }
   return THEMES[f] ? 'th-' + f : CHK.has(f) ? 'chk fr-' + f : 'fr-' + f;
 }
 function styleVars(c, kind) {
