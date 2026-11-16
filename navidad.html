@@ -83,11 +83,15 @@ code{background:#0d0f12;padding:2px 5px;border-radius:4px;font-size:12px;word-br
 
 /* iconos: se colocan por % de la tarjeta (centro del icono), con zoom individual */
 .ic{position:absolute;width:0;height:0;z-index:5;pointer-events:none;animation:bob 3s ease-in-out infinite}
-.ic .in{position:absolute;left:0;top:0;transform:translate(-50%,-50%) scale(var(--sc,1));transform-origin:center;font-size:var(--is);line-height:1;white-space:nowrap}
+.ic .in{position:absolute;left:0;top:0;transform:translate(-50%,-50%) rotate(var(--rot,0deg)) scale(var(--sc,1));transform-origin:center;font-size:var(--is);line-height:1;white-space:nowrap}
 .ic img{height:var(--is);width:auto;max-width:calc(var(--is)*2);display:block;object-fit:contain;-webkit-user-drag:none;user-select:none}
 body:not(.ov) .ic .in{pointer-events:auto;cursor:grab;touch-action:none;user-select:none}
 body:not(.ov) .ic .in:hover{outline:1px dashed rgba(255,255,255,.75);outline-offset:3px}
 body:not(.ov) .ic .in.drag{cursor:grabbing;outline-color:var(--pacc)}
+.rot-handle{display:none}
+body:not(.ov) .ic .rot-handle{display:grid;place-items:center;position:absolute;left:0;top:calc(var(--is) * var(--sc,1) * 0.6 + 12px);width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;background:#193e36;color:#fff;border:2px solid #f0c974;box-shadow:0 2px 8px #000b;font:bold 19px/1 Arial,sans-serif;pointer-events:auto;cursor:alias;touch-action:none;user-select:none;z-index:7}
+body:not(.ov) .ic[data-k="b"] .rot-handle,body:not(.ov) .ic[data-k="d"] .rot-handle{top:calc(var(--is) * var(--sc,1) * -0.6 - 12px)}
+body:not(.ov) .ic .rot-handle:hover,body:not(.ov) .ic .rot-handle.turning{background:#aa3e46;border-color:#fff;box-shadow:0 0 12px #e9ce88aa}
 .noanim .ic{animation:none}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
@@ -255,7 +259,7 @@ const Q = new URLSearchParams(location.search), OV = Q.has('overlay') || Q.has('
 const DEF = {clientId:'',font:'Mountains of Christmas, cursive',fontCustom:'',bg:'#102c27',text:'#fff9e9',c1:'#eb484a',c2:'#24a37d',opacity:0.92,radius:14,width:420,titleSize:20,
  pos:'bottom-left',posPoll:'bottom-right',hideBegin:0,hideLock:0,noLock:false,hideAfter:30,hideCancel:30,noCancel:false,hideBeginPoll:0,hidePoll:30,hideCancelPoll:30,noCancelPoll:false,showPct:true,showPts:true,showUsers:true,theme:'navidad',sound:true,volume:0.5,anim:true,mode:'both',
  sndPBegin:'',sndPLock:'',sndPWin:'',sndPCancel:'',sndPOut:'',sndQBegin:'',sndQWin:'',sndQCancel:'',sndQOut:'',
- iconA:'',iconB:'',iconC:'',iconD:'',upA:'',upB:'',upC:'',upD:'',iconSize:34,xA:null,yA:null,sA:1,xB:null,yB:null,sB:1,xC:null,yC:null,sC:1,xD:null,yD:null,sD:1,
+ iconA:'',iconB:'',iconC:'',iconD:'',upA:'',upB:'',upC:'',upD:'',iconSize:34,xA:null,yA:null,sA:1,rA:0,xB:null,yB:null,sB:1,rB:0,xC:null,yC:null,sC:1,rC:0,xD:null,yD:null,sD:1,rD:0,
  frame:'auto',frameColorOn:false,frameColor:'#d37bff',checkSize:14,zoomPred:1,zoomPoll:1,
  animBegin:'theme',animLock:'theme',animWin:'theme',animCancel:'theme',animOut:'fade',particles:true,
   xSnow:true,xLights:true,xRibbon:true,xBanner:'ESPECIAL NAVIDAD',diamondOn:true,diamondAuto:true,diamondDark:'#0b2b22',diamondLight:'#265741',diamondSize:72};
@@ -340,13 +344,14 @@ const FIELDS = [
  ['frame','Diseño del marco','select',FRAMES],
  ['frameColorOn','Color propio del marco','check'],['frameColor','Color del marco','color'],
  ['checkSize','Tamaño de los cuadros (tableros)','range',6,32,1],
- ['#','Iconos (arrástralos en la vista previa)'],
- ['iconA','Icono 1 (sup. der.)','icon'],['sA','Zoom del icono 1','range',0.2,5,0.05],
- ['iconB','Icono 2 (inf. izq.)','icon'],['sB','Zoom del icono 2','range',0.2,5,0.05],
- ['iconC','Icono 3 (sup. izq.)','icon'],['sC','Zoom del icono 3','range',0.2,5,0.05],
- ['iconD','Icono 4 (inf. der.)','icon'],['sD','Zoom del icono 4','range',0.2,5,0.05],
+ ['#','Iconos · mover, girar y ampliar'],
+ ['!','Arrastra el icono para moverlo. Para girarlo, arrastra el botón circular ⟳ que aparece junto a cada icono o usa el control «Giro». Con la rueda del ratón cambias el zoom. Los ajustes se guardan para OBS.'],
+ ['iconA','Icono 1 (sup. der.)','icon'],['sA','Zoom del icono 1','range',0.2,5,0.05],['rA','Giro del icono 1 (°)','range',0,360,1],
+ ['iconB','Icono 2 (inf. izq.)','icon'],['sB','Zoom del icono 2','range',0.2,5,0.05],['rB','Giro del icono 2 (°)','range',0,360,1],
+ ['iconC','Icono 3 (sup. izq.)','icon'],['sC','Zoom del icono 3','range',0.2,5,0.05],['rC','Giro del icono 3 (°)','range',0,360,1],
+ ['iconD','Icono 4 (inf. der.)','icon'],['sD','Zoom del icono 4','range',0.2,5,0.05],['rD','Giro del icono 4 (°)','range',0,360,1],
  ['iconSize','Tamaño base de iconos','range',16,120,1],
- ['resetIcons','Devolver iconos a las esquinas y zoom 1','button'],
+ ['resetIcons','Restablecer posición, zoom y giro de iconos','button'],
  ['#','Animaciones'],
  ['anim','Animaciones','check'],
  ['animBegin','Activa (entrada)','select',[['theme','Según el tema'], ...ANIMS]],
@@ -375,7 +380,7 @@ const dec = s => JSON.parse(decodeURIComponent(escape(atob(s))));   // formato a
 const SK = {clientId:'id',font:'f',fontCustom:'fc',bg:'bg',text:'tx',c1:'c1',c2:'c2',opacity:'op',radius:'r',width:'w',titleSize:'ts',pos:'p',posPoll:'pp',
  hideAfter:'h',hideLock:'hl',hidePoll:'hq',hideBegin:'hb',hideBeginPoll:'hn',noLock:'nl',hideCancel:'hc',noCancel:'nc',hideCancelPoll:'hd',noCancelPoll:'nd',showPct:'sp',showPts:'sq',showUsers:'su',theme:'t',sound:'sn',volume:'v',anim:'an',mode:'m',iconSize:'is',
  iconA:'iA',iconB:'iB',iconC:'iC',iconD:'iD',upA:'uA',upB:'uB',upC:'uC',upD:'uD',
- xA:'xA',yA:'yA',sA:'sA',xB:'xB',yB:'yB',sB:'sB',xC:'xC',yC:'yC',sC:'sC',xD:'xD',yD:'yD',sD:'sD',
+ xA:'xA',yA:'yA',sA:'sA',rA:'rA',xB:'xB',yB:'yB',sB:'sB',rB:'rB',xC:'xC',yC:'yC',sC:'sC',rC:'rC',xD:'xD',yD:'yD',sD:'sD',rD:'rD',
  frame:'fr',frameColorOn:'fo',frameColor:'fk',checkSize:'cs',zoomPred:'zp',zoomPoll:'zq',
  animBegin:'ab',animLock:'al',animWin:'aw',animCancel:'ac',animOut:'ao',particles:'pa',
  sndPBegin:'kb',sndPLock:'kl',sndPWin:'kw',sndPCancel:'kc',sndPOut:'ko',sndQBegin:'qb',sndQWin:'qw',sndQCancel:'qc',sndQOut:'qo',xSnow:'xs',xLights:'xg',xRibbon:'xr',xBanner:'xb',diamondOn:'dn',diamondAuto:'da',diamondDark:'dd',diamondLight:'dl',diamondSize:'ds'};
@@ -429,8 +434,8 @@ async function handleCallback() {
 function logout() { LS.removeItem('tw_auth'); location.reload(); }
 
 // ---------- iconos (emoji o imagen PNG) ----------
-const ICK = {a:{t:'iconA',u:'upA',x:'xA',y:'yA',s:'sA',d:[98,0]}, b:{t:'iconB',u:'upB',x:'xB',y:'yB',s:'sB',d:[2,100]},
- c:{t:'iconC',u:'upC',x:'xC',y:'yC',s:'sC',d:[2,0]}, d:{t:'iconD',u:'upD',x:'xD',y:'yD',s:'sD',d:[98,100]}};
+const ICK = {a:{t:'iconA',u:'upA',x:'xA',y:'yA',s:'sA',r:'rA',d:[98,0]}, b:{t:'iconB',u:'upB',x:'xB',y:'yB',s:'sB',r:'rB',d:[2,100]},
+ c:{t:'iconC',u:'upC',x:'xC',y:'yC',s:'sC',r:'rC',d:[2,0]}, d:{t:'iconD',u:'upD',x:'xD',y:'yD',s:'sD',r:'rD',d:[98,100]}};
 const isImg = v => /\.(png|webp|gif|jpe?g|svg|avif)(\?.*)?(#.*)?$/i.test(v) || /^data:image\//i.test(v);
 function iconVal(c, k) {
   const K = ICK[k];
@@ -440,8 +445,8 @@ function iconVal(c, k) {
 }
 const iconHTML = (c, k) => {
   const v = iconVal(c, k); if (!v) return '';
-  const K = ICK[k], x = c[K.x] ?? K.d[0], y = c[K.y] ?? K.d[1], z = +c[K.s] || 1;
-  return `<span class="ic" data-k="${k}" style="left:${x}%;top:${y}%"><span class="in" style="--sc:${z}">${isImg(v) ? `<img src="${esc(v)}" alt="" draggable="false">` : esc(v)}</span></span>`;
+  const K = ICK[k], x = c[K.x] ?? K.d[0], y = c[K.y] ?? K.d[1], z = +c[K.s] || 1, rot = +c[K.r] || 0;
+  return `<span class="ic" data-k="${k}" style="left:${x}%;top:${y}%;--sc:${z};--rot:${rot}deg"><span class="in">${isImg(v) ? `<img src="${esc(v)}" alt="" draggable="false">` : esc(v)}</span>${OV ? '' : '<span class="rot-handle" title="Arrastra para girar este icono" aria-label="Girar icono">⟳</span>'}</span>`;
 };
 function readIcon(file) {
   return new Promise(res => {
@@ -728,7 +733,7 @@ function buildPanel() {
     <h2>2. Diseño</h2>
     <p><b>Fuentes Shlop y Jeepers:</b> no son de Google Fonts. Instálalas en el equipo donde corre OBS o sube los archivos a una carpeta <code>fonts</code> junto a este navidad.html (<code>Shlop.ttf</code>, <code>Jeepers.ttf</code>). Cualquier otra fuente instalada se puede escribir en «Otra fuente».</p>
     <p><b>Zoom:</b> súbelo aquí en vez de estirar la fuente en OBS; así el texto y el marco se dibujan más grandes sin perder calidad.</p>
-    <p><b>Iconos:</b> escribe un emoji o la ruta de un PNG de tu repositorio (por ejemplo <code>iconos/fantasma.png</code>), o pulsa «Subir» para incrustarlo (hace la URL más larga). <b>Arrastra cada icono en la vista previa</b> para ponerlo donde quieras (incluso fuera de la tarjeta) y usa la <b>rueda del ratón</b> sobre él o su control «Zoom» para agrandarlo o reducirlo.</p>
+    <p><b>Iconos:</b> escribe un emoji o la ruta de un PNG de tu repositorio (por ejemplo <code>iconos/fantasma.png</code>), o pulsa «Subir» para incrustarlo (hace la URL más larga). <b>Arrastra los iconos en la vista previa</b> para moverlos (incluso fuera de la tarjeta). Usa el botón circular ⟳ junto al icono o el control «Giro» para rotarlo entre 0° y 360°. La <b>rueda del ratón</b> cambia su zoom.</p>
     <div id="form"></div>
     <datalist id="emo">${['🎄','🎅','🤶','❄️','☃️','⛄','🎁','🎀','🌟','⭐','🔔','🦌','🍬','🍭','🕯️','🌲','🧦','🧤','🛷','✨','🎃','🦇','🤡','🎪','💀','🌼','🧪','🫧','🐰','🥕','🐇','👻','🕷️','🕸️','🧙','🍬','🔮','🌙','⭐','🔥','-'].map(e => `<option value="${e}">`).join('')}</datalist>
 <datalist id="snl">${['sonidos/entrada.mp3','sonidos/cierre.mp3','sonidos/resultado.mp3','sonidos/cancelada.mp3','sonidos/salida.mp3','-'].map(e => `<option value="${e}">`).join('')}</datalist>
@@ -749,7 +754,7 @@ function buildPanel() {
     if (k === '!') { const pp = document.createElement('p'); pp.innerHTML = name; f.appendChild(pp); return; }
     if (type === 'button') {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'sec'; b.style.margin = '6px 0'; b.textContent = name;
-      b.onclick = () => { 'ABCD'.split('').forEach(L => { cfg['x' + L] = null; cfg['y' + L] = null; cfg['s' + L] = 1; }); refreshForm(); update(); };
+      b.onclick = () => { 'ABCD'.split('').forEach(L => { cfg['x' + L] = null; cfg['y' + L] = null; cfg['s' + L] = 1; cfg['r' + L] = 0; }); refreshForm(); update(); };
       f.appendChild(b); return;
     }
     const l = document.createElement('label'); l.innerHTML = `<span>${name}</span>`; let i, out;
@@ -818,34 +823,64 @@ function buildPanel() {
   });
   P = DEMO('ACTIVE'); PL = DEMOP('ACTIVE'); update();
 }
-// arrastrar (mover a cualquier parte) y rueda (zoom) de cada icono en la vista previa
+// Edición directa: arrastrar para mover, manilla ⟳ para girar y rueda para zoom.
 function initIconEdit(stage) {
   let d = null;
   const pct = (e, r) => [(e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100];
   const lim = v => Math.max(-400, Math.min(500, +v.toFixed(1)));
+  const setOutput = (key, value) => {
+    const sl = INPUTS[key]; if (!sl) return;
+    sl.value = value;
+    if (sl.nextSibling?.tagName === 'OUTPUT') sl.nextSibling.textContent = value;
+  };
   stage.addEventListener('pointerdown', e => {
-    const n = e.target.closest('.in'); if (!n) return;
-    const ic = n.parentElement, K = ICK[ic.dataset.k], card = ic.closest('.card'), r = card.getBoundingClientRect(), [px, py] = pct(e, r);
-    d = {n, k: ic.dataset.k, K, card, ox: px - (cfg[K.x] ?? K.d[0]), oy: py - (cfg[K.y] ?? K.d[1])};
-    n.setPointerCapture(e.pointerId); n.classList.add('drag'); e.preventDefault();
+    const handle = e.target.closest('.rot-handle');
+    const n = handle || e.target.closest('.in');
+    if (!n) return;
+    const ic = n.closest('.ic'), K = ICK[ic?.dataset.k], card = ic?.closest('.card');
+    if (!K || !card) return;
+    if (handle) {
+      const r = ic.getBoundingClientRect();
+      const a = Math.atan2(e.clientY - (r.top+r.height/2), e.clientX - (r.left+r.width/2)) * 180 / Math.PI;
+      d = {n, k:ic.dataset.k, K, ic, mode:'rotate', offset:(+cfg[K.r]||0)-a};
+      n.classList.add('turning');
+    } else {
+      const [px, py] = pct(e, card.getBoundingClientRect());
+      d = {n, k:ic.dataset.k, K, card, mode:'move', ox:px-(cfg[K.x]??K.d[0]), oy:py-(cfg[K.y]??K.d[1])};
+      n.classList.add('drag');
+    }
+    stage.setPointerCapture(e.pointerId);
+    e.preventDefault();
   });
   stage.addEventListener('pointermove', e => {
-    if (!d) return;
-    const [px, py] = pct(e, d.card.getBoundingClientRect()), x = lim(px - d.ox), y = lim(py - d.oy);
-    cfg[d.K.x] = x; cfg[d.K.y] = y;
-    stage.querySelectorAll('.ic[data-k="' + d.k + '"]').forEach(m => { m.style.left = x + '%'; m.style.top = y + '%'; });
+    if (!d || !stage.hasPointerCapture(e.pointerId)) return;
+    if (d.mode === 'rotate') {
+      const r = d.ic.getBoundingClientRect();
+      const a = Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2))*180/Math.PI;
+      const rot = (Math.round(a+d.offset)%360+360)%360;
+      cfg[d.K.r] = rot;
+      stage.querySelectorAll('.ic[data-k="' + d.k + '"]').forEach(ic => ic.style.setProperty('--rot',rot+'deg'));
+      setOutput(d.K.r,rot);
+    } else {
+      const [px,py] = pct(e, d.card.getBoundingClientRect()), x = lim(px-d.ox), y = lim(py-d.oy);
+      cfg[d.K.x]=x; cfg[d.K.y]=y;
+      stage.querySelectorAll('.ic[data-k="' + d.k + '"]').forEach(ic => {ic.style.left=x+'%';ic.style.top=y+'%';});
+    }
     refreshUrl();
+    e.preventDefault();
   });
-  const end = () => { if (d) d.n.classList.remove('drag'); d = null; };
-  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+  const end = () => { if (d) d.n.classList.remove('drag','turning'); d = null; };
+  stage.addEventListener('pointerup', end);
+  stage.addEventListener('pointercancel', end);
+  stage.addEventListener('lostpointercapture', end);
   stage.addEventListener('wheel', e => {
     const n = e.target.closest('.in'); if (!n) return; e.preventDefault();
-    const k = n.parentElement.dataset.k, K = ICK[k], z = Math.min(5, Math.max(0.2, +((+cfg[K.s] || 1) * (e.deltaY < 0 ? 1.08 : 1 / 1.08)).toFixed(2)));
-    cfg[K.s] = z;
-    stage.querySelectorAll('.ic[data-k="' + k + '"] .in').forEach(m => m.style.setProperty('--sc', z));
-    const sl = INPUTS[K.s]; if (sl) { sl.value = z; if (sl.nextSibling?.tagName === 'OUTPUT') sl.nextSibling.textContent = z; }
+    const k = n.parentElement.dataset.k, K = ICK[k], z = Math.min(5,Math.max(0.2,+((+cfg[K.s]||1)*(e.deltaY<0?1.08:1/1.08)).toFixed(2)));
+    cfg[K.s]=z;
+    stage.querySelectorAll('.ic[data-k="' + k + '"]').forEach(ic => ic.style.setProperty('--sc',z));
+    setOutput(K.s,z);
     refreshUrl();
-  }, {passive: false});
+  },{passive:false});
 }
 function refreshForm() {
   FIELDS.forEach(([kk,, tt, ...xx]) => { const n = INPUTS[kk]; if (!n) return;
