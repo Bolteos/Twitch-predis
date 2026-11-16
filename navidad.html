@@ -82,7 +82,7 @@ code{background:#0d0f12;padding:2px 5px;border-radius:4px;font-size:12px;word-br
 .bar i{display:block;height:100%;border-radius:99px;transition:width .6s}
 
 /* iconos: se colocan por % de la tarjeta (centro del icono), con zoom individual */
-.ic{position:absolute;width:0;height:0;z-index:5;pointer-events:none;animation:bob 3s ease-in-out infinite}
+.ic{position:absolute;width:0;height:0;z-index:5;pointer-events:none;animation:none}
 .ic .in{position:absolute;left:0;top:0;transform:translate(-50%,-50%) rotate(var(--rot,0deg)) scale(var(--sc,1));transform-origin:center;font-size:var(--is);line-height:1;white-space:nowrap}
 .ic img{height:var(--is);width:auto;max-width:calc(var(--is)*2);display:block;object-fit:contain;-webkit-user-drag:none;user-select:none}
 body:not(.ov) .ic .in{pointer-events:auto;cursor:grab;touch-action:none;user-select:none}
@@ -92,8 +92,24 @@ body:not(.ov) .ic .in.drag{cursor:grabbing;outline-color:var(--pacc)}
 body:not(.ov) .ic .rot-handle{display:grid;place-items:center;position:absolute;left:0;top:calc(var(--is) * var(--sc,1) * 0.6 + 12px);width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;background:#193e36;color:#fff;border:2px solid #f0c974;box-shadow:0 2px 8px #000b;font:bold 19px/1 Arial,sans-serif;pointer-events:auto;cursor:alias;touch-action:none;user-select:none;z-index:7}
 body:not(.ov) .ic[data-k="b"] .rot-handle,body:not(.ov) .ic[data-k="d"] .rot-handle{top:calc(var(--is) * var(--sc,1) * -0.6 - 12px)}
 body:not(.ov) .ic .rot-handle:hover,body:not(.ov) .ic .rot-handle.turning{background:#aa3e46;border-color:#fff;box-shadow:0 0 12px #e9ce88aa}
-.noanim .ic{animation:none}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.ic[data-motion="bob"]{animation:icon-bob 3s ease-in-out infinite}
+.ic[data-motion="float"]{animation:icon-float 4s ease-in-out infinite}
+.ic[data-motion="sway"]{animation:icon-sway 3.4s ease-in-out infinite}
+.ic[data-motion="pulse"]{animation:icon-pulse 2.2s ease-in-out infinite}
+.ic[data-motion="spin"]{animation:icon-spin 7s linear infinite}
+.ic[data-motion="wobble"]{animation:icon-wobble 2.8s ease-in-out infinite}
+.ic[data-motion="sparkle"]{animation:icon-sparkle 2.5s ease-in-out infinite}
+.ic[data-motion="bounce"]{animation:icon-bounce 2s ease-in-out infinite}
+.ic[data-motion="none"], .noanim .ic{animation:none}
+@keyframes icon-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes icon-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+@keyframes icon-sway{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@keyframes icon-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes icon-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes icon-wobble{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-5px) rotate(-8deg)}75%{transform:translateX(5px) rotate(8deg)}}
+@keyframes icon-sparkle{0%,100%{filter:drop-shadow(0 0 0 transparent);opacity:1}50%{filter:drop-shadow(0 0 14px #fff3a8);opacity:.78}}
+@keyframes icon-bounce{0%,100%{transform:translateY(0) scale(1,1)}45%{transform:translateY(-15px) scale(.96,1.04)}65%{transform:translateY(0) scale(1.05,.95)}}
+@media(prefers-reduced-motion:reduce){.ic[data-motion]{animation:none}}
 
 /* ---------- animaciones de entrada / estado ---------- */
 @keyframes fade{from{opacity:0}to{opacity:1}}
@@ -259,7 +275,7 @@ const Q = new URLSearchParams(location.search), OV = Q.has('overlay') || Q.has('
 const DEF = {clientId:'',font:'Mountains of Christmas, cursive',fontCustom:'',bg:'#102c27',text:'#fff9e9',c1:'#eb484a',c2:'#24a37d',opacity:0.92,radius:14,width:420,titleSize:20,
  pos:'bottom-left',posPoll:'bottom-right',hideBegin:0,hideLock:0,noLock:false,hideAfter:30,hideCancel:30,noCancel:false,hideBeginPoll:0,hidePoll:30,hideCancelPoll:30,noCancelPoll:false,showPct:true,showPts:true,showUsers:true,theme:'navidad',sound:true,volume:0.5,anim:true,mode:'both',
  sndPBegin:'',sndPLock:'',sndPWin:'',sndPCancel:'',sndPOut:'',sndQBegin:'',sndQWin:'',sndQCancel:'',sndQOut:'',
- iconA:'',iconB:'',iconC:'',iconD:'',upA:'',upB:'',upC:'',upD:'',iconSize:34,xA:null,yA:null,sA:1,rA:0,xB:null,yB:null,sB:1,rB:0,xC:null,yC:null,sC:1,rC:0,xD:null,yD:null,sD:1,rD:0,
+ iconA:'',iconB:'',iconC:'',iconD:'',upA:'',upB:'',upC:'',upD:'',iconSize:34,iconMotionEnabled:true,iconAnimGlobal:'bob',iconAnimA:'inherit',iconAnimB:'inherit',iconAnimC:'inherit',iconAnimD:'inherit',xA:null,yA:null,sA:1,rA:0,xB:null,yB:null,sB:1,rB:0,xC:null,yC:null,sC:1,rC:0,xD:null,yD:null,sD:1,rD:0,
  frame:'auto',frameColorOn:false,frameColor:'#d37bff',checkSize:14,zoomPred:1,zoomPoll:1,
  animBegin:'theme',animLock:'theme',animWin:'theme',animCancel:'theme',animOut:'fade',particles:true,
   xSnow:true,xLights:true,xRibbon:true,xBanner:'ESPECIAL NAVIDAD',diamondOn:true,diamondAuto:true,diamondDark:'#0b2b22',diamondLight:'#265741',diamondSize:72};
@@ -301,6 +317,18 @@ const FRAMES = [['auto','Según el tema'],['none','Sin marco'],['xmas-gold','�
  ['neon','Neón'],['fire','Llamas'],['ghost','Fantasma'],['blood','Sangre goteando'],['webs','Telarañas'],['hazard','Cinta de peligro'],['gothic','Gótico'],
  ['glitch','Glitch'],['stitch','Costura'],['tomb','Lápida'],['pumpkin','Calabaza'],['tape','Cinta adhesiva'],['double','Doble línea']];
 const POS = ['top-left','top-right','bottom-left','bottom-right'];
+// Efectos de movimiento independientes de la entrada/salida de las tarjetas.
+const ICON_MOTIONS = [
+ ['none','Estático (sin movimiento)'],
+ ['bob','Movimiento suave (original)'],
+ ['float','Flotación vertical'],
+ ['sway','Balanceo lateral'],
+ ['pulse','Pulso suave'],
+ ['spin','Giro continuo'],
+ ['wobble','Vaivén'],
+ ['sparkle','Brillo intermitente'],
+ ['bounce','Rebote']
+];
 const withTheme = l => [['theme','Según el tema'], ...l.filter(a => a[0] !== 'none' || true)];
 
 const FIELDS = [
@@ -352,6 +380,14 @@ const FIELDS = [
  ['iconD','Icono 4 (inf. der.)','icon'],['sD','Zoom del icono 4','range',0.2,5,0.05],['rD','Giro del icono 4 (°)','range',0,360,1],
  ['iconSize','Tamaño base de iconos','range',16,120,1],
  ['resetIcons','Restablecer posición, zoom y giro de iconos','button'],
+ ['#','Animaciones de los iconos'],
+ ['iconMotionEnabled','Activar movimiento de iconos','check'],
+ ['iconAnimGlobal','Animación general de los iconos','select',ICON_MOTIONS],
+ ['!','Selecciona «Estático» para dejar los iconos inmóviles. Cada icono puede usar la animación general o una diferente. Desactivar el movimiento detiene todos los efectos de iconos sin cambiar sus posiciones ni ángulos.'],
+ ['iconAnimA','Animación del icono 1','select',[['inherit','Usar animación general'],...ICON_MOTIONS]],
+ ['iconAnimB','Animación del icono 2','select',[['inherit','Usar animación general'],...ICON_MOTIONS]],
+ ['iconAnimC','Animación del icono 3','select',[['inherit','Usar animación general'],...ICON_MOTIONS]],
+ ['iconAnimD','Animación del icono 4','select',[['inherit','Usar animación general'],...ICON_MOTIONS]],
  ['#','Animaciones'],
  ['anim','Animaciones','check'],
  ['animBegin','Activa (entrada)','select',[['theme','Según el tema'], ...ANIMS]],
@@ -379,7 +415,7 @@ const dec = s => JSON.parse(decodeURIComponent(escape(atob(s))));   // formato a
 // URL corta: solo viajan los ajustes distintos del valor por defecto (o del tema), con claves de 1-2 letras
 const SK = {clientId:'id',font:'f',fontCustom:'fc',bg:'bg',text:'tx',c1:'c1',c2:'c2',opacity:'op',radius:'r',width:'w',titleSize:'ts',pos:'p',posPoll:'pp',
  hideAfter:'h',hideLock:'hl',hidePoll:'hq',hideBegin:'hb',hideBeginPoll:'hn',noLock:'nl',hideCancel:'hc',noCancel:'nc',hideCancelPoll:'hd',noCancelPoll:'nd',showPct:'sp',showPts:'sq',showUsers:'su',theme:'t',sound:'sn',volume:'v',anim:'an',mode:'m',iconSize:'is',
- iconA:'iA',iconB:'iB',iconC:'iC',iconD:'iD',upA:'uA',upB:'uB',upC:'uC',upD:'uD',
+ iconA:'iA',iconB:'iB',iconC:'iC',iconD:'iD',upA:'uA',upB:'uB',upC:'uC',upD:'uD',iconMotionEnabled:'ime',iconAnimGlobal:'img',iconAnimA:'ima',iconAnimB:'imb',iconAnimC:'imc',iconAnimD:'imd',
  xA:'xA',yA:'yA',sA:'sA',rA:'rA',xB:'xB',yB:'yB',sB:'sB',rB:'rB',xC:'xC',yC:'yC',sC:'sC',rC:'rC',xD:'xD',yD:'yD',sD:'sD',rD:'rD',
  frame:'fr',frameColorOn:'fo',frameColor:'fk',checkSize:'cs',zoomPred:'zp',zoomPoll:'zq',
  animBegin:'ab',animLock:'al',animWin:'aw',animCancel:'ac',animOut:'ao',particles:'pa',
@@ -434,8 +470,8 @@ async function handleCallback() {
 function logout() { LS.removeItem('tw_auth'); location.reload(); }
 
 // ---------- iconos (emoji o imagen PNG) ----------
-const ICK = {a:{t:'iconA',u:'upA',x:'xA',y:'yA',s:'sA',r:'rA',d:[98,0]}, b:{t:'iconB',u:'upB',x:'xB',y:'yB',s:'sB',r:'rB',d:[2,100]},
- c:{t:'iconC',u:'upC',x:'xC',y:'yC',s:'sC',r:'rC',d:[2,0]}, d:{t:'iconD',u:'upD',x:'xD',y:'yD',s:'sD',r:'rD',d:[98,100]}};
+const ICK = {a:{t:'iconA',u:'upA',x:'xA',y:'yA',s:'sA',r:'rA',m:'iconAnimA',d:[98,0]}, b:{t:'iconB',u:'upB',x:'xB',y:'yB',s:'sB',r:'rB',m:'iconAnimB',d:[2,100]},
+ c:{t:'iconC',u:'upC',x:'xC',y:'yC',s:'sC',r:'rC',m:'iconAnimC',d:[2,0]}, d:{t:'iconD',u:'upD',x:'xD',y:'yD',s:'sD',r:'rD',m:'iconAnimD',d:[98,100]}};
 const isImg = v => /\.(png|webp|gif|jpe?g|svg|avif)(\?.*)?(#.*)?$/i.test(v) || /^data:image\//i.test(v);
 function iconVal(c, k) {
   const K = ICK[k];
@@ -446,7 +482,9 @@ function iconVal(c, k) {
 const iconHTML = (c, k) => {
   const v = iconVal(c, k); if (!v) return '';
   const K = ICK[k], x = c[K.x] ?? K.d[0], y = c[K.y] ?? K.d[1], z = +c[K.s] || 1, rot = +c[K.r] || 0;
-  return `<span class="ic" data-k="${k}" style="left:${x}%;top:${y}%;--sc:${z};--rot:${rot}deg"><span class="in">${isImg(v) ? `<img src="${esc(v)}" alt="" draggable="false">` : esc(v)}</span>${OV ? '' : '<span class="rot-handle" title="Arrastra para girar este icono" aria-label="Girar icono">⟳</span>'}</span>`;
+  const selected = c[K.m] && c[K.m] !== 'inherit' ? c[K.m] : c.iconAnimGlobal;
+  const motion = c.iconMotionEnabled && ICON_MOTIONS.some(([id]) => id === selected) ? selected : 'none';
+  return `<span class="ic" data-k="${k}" data-motion="${motion}" style="left:${x}%;top:${y}%;--sc:${z};--rot:${rot}deg"><span class="in">${isImg(v) ? `<img src="${esc(v)}" alt="" draggable="false">` : esc(v)}</span>${OV ? '' : '<span class="rot-handle" title="Arrastra para girar este icono" aria-label="Girar icono">⟳</span>'}</span>`;
 };
 function readIcon(file) {
   return new Promise(res => {
@@ -733,7 +771,7 @@ function buildPanel() {
     <h2>2. Diseño</h2>
     <p><b>Fuentes Shlop y Jeepers:</b> no son de Google Fonts. Instálalas en el equipo donde corre OBS o sube los archivos a una carpeta <code>fonts</code> junto a este navidad.html (<code>Shlop.ttf</code>, <code>Jeepers.ttf</code>). Cualquier otra fuente instalada se puede escribir en «Otra fuente».</p>
     <p><b>Zoom:</b> súbelo aquí en vez de estirar la fuente en OBS; así el texto y el marco se dibujan más grandes sin perder calidad.</p>
-    <p><b>Iconos:</b> escribe un emoji o la ruta de un PNG de tu repositorio (por ejemplo <code>iconos/fantasma.png</code>), o pulsa «Subir» para incrustarlo (hace la URL más larga). <b>Arrastra los iconos en la vista previa</b> para moverlos (incluso fuera de la tarjeta). Usa el botón circular ⟳ junto al icono o el control «Giro» para rotarlo entre 0° y 360°. La <b>rueda del ratón</b> cambia su zoom.</p>
+    <p><b>Iconos:</b> escribe un emoji o la ruta de un PNG de tu repositorio (por ejemplo <code>iconos/fantasma.png</code>), o pulsa «Subir» para incrustarlo (hace la URL más larga). <b>Arrastra los iconos en la vista previa</b> para moverlos (incluso fuera de la tarjeta). Usa el botón circular ⟳ junto al icono o el control «Giro» para rotarlo entre 0° y 360°. La <b>rueda del ratón</b> cambia su zoom. En «Animaciones de los iconos» puedes dejarlos estáticos o elegir un efecto para cada uno.</p>
     <div id="form"></div>
     <datalist id="emo">${['🎄','🎅','🤶','❄️','☃️','⛄','🎁','🎀','🌟','⭐','🔔','🦌','🍬','🍭','🕯️','🌲','🧦','🧤','🛷','✨','🎃','🦇','🤡','🎪','💀','🌼','🧪','🫧','🐰','🥕','🐇','👻','🕷️','🕸️','🧙','🍬','🔮','🌙','⭐','🔥','-'].map(e => `<option value="${e}">`).join('')}</datalist>
 <datalist id="snl">${['sonidos/entrada.mp3','sonidos/cierre.mp3','sonidos/resultado.mp3','sonidos/cancelada.mp3','sonidos/salida.mp3','-'].map(e => `<option value="${e}">`).join('')}</datalist>
