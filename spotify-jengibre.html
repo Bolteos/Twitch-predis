@@ -137,8 +137,8 @@ body.setup #setup{display:block}
 const CONFIG = {
   CLIENT_ID: "",          // Client ID de tu app de Spotify
   REFRESH_TOKEN: "",      // opcional: normalmente se usa el enlace personal que genera el panel
-  POLL_MS: 5000,          // cada cuántos ms consulta a Spotify mientras suena música
-  IDLE_POLL_MS: 8000,     // cada cuántos ms consulta cuando está en pausa / no suena nada
+  POLL_MS: 30000,          // cada cuántos ms consulta a Spotify mientras suena música
+  IDLE_POLL_MS: 60000,     // cada cuántos ms consulta cuando está en pausa / no suena nada
   IDLE_TITLE: "Nada sonando",        // texto cuando Spotify no está reproduciendo
   IDLE_ARTIST: "Dale play en Spotify",
   HIDE_WHEN_IDLE: false,  // true = el widget se oculta si no hay música
@@ -253,7 +253,12 @@ function setError(t,d){
 
 /* ---- consulta a Spotify ---- */
 let n401=0,nNet=0;
+const limitKey="ginger_spotify_limit_"+cid();
+let limitUntil=0;
+function cooldownMs(){const saved=Number(ls.get(limitKey))||0;return Math.max(0,Math.max(limitUntil,saved)-Date.now())}
+function saveCooldown(ms){limitUntil=Date.now()+ms;ls.set(limitKey,String(limitUntil))}
 async function tick(){
+  const left=cooldownMs();if(left>0){setError("Spotify: límite temporal","Reintentando en "+Math.ceil(left/60000)+" min");dbg("Esperando límite Spotify: "+Math.ceil(left/1000)+" s");setTimeout(tick,Math.min(left+1000,2147483647));return}
   let wait=0;
   try{
     dbg("Solicitando token de acceso…");
@@ -265,10 +270,19 @@ async function tick(){
     if(r.status===204)setTrack(null);
     else if(r.status===401){AT=null;setError("Spotify: error 401","Autorización rechazada · Reconecta tu cuenta");if(++n401>=3)wait=20000}
     else if(r.status===429){
-      let ra=+r.headers.get("Retry-After")||5,why="";
-      try{why=(await r.json()).reason||""}catch(e){}
-      wait=Math.max(ra,why?30:5)*1000;
-      setError("Spotify: error 429","Límite de consultas · Reintento en "+Math.round(wait/1000)+" s"+(why?" · "+why:""))}
+      let ra=Number(r.headers.get("Retry-After")),reason="",detail="";
+      try{const body=await r.json();reason=body?.reason||body?.error?.reason||"";detail=body?.message||body?.error?.message||""}catch(_){}
+      const quota=reason==="QUOTA_EXCEEDED";
+      // El encabezado Retry-After puede no estar expuesto en navegadores.
+      // Nunca reintentar cada pocos segundos cuando Spotify limita la cuenta.
+      wait=(Number.isFinite(ra)&&ra>0?Math.ceil(ra)*1000:(quota?3600000:300000));
+      wait=Math.max(wait,quota?3600000:300000);
+      saveCooldown(wait);
+      dbg("429 "+(reason||"RATE_LIMIT")+"; Retry-After "+(Number.isFinite(ra)?ra:"no accesible")+"; espera "+Math.ceil(wait/1000)+" s");
+      setError(quota?"Spotify: cuota agotada":"Spotify: error 429",
+        (quota?"Cuota de la app agotada":"Demasiadas consultas")+
+        " · Reintento en "+Math.ceil(wait/60000)+" min"+(detail?" · "+detail.slice(0,50):""))
+    }
     else if(r.status===403){let m="";try{const er=await r.json();m=er?.error?.message||er?.error_description||""}catch(e){}
       console.warn("[gingerbread] 403",m);setError("Spotify: acceso denegado",m||"403: revisa User Management, Premium y API");wait=15000}
     else if(!r.ok){let details="";try{details=JSON.stringify(await r.json()).slice(0,140)}catch(_){}setError("Spotify: error "+r.status,details||"Reintentando…");wait=8000}
