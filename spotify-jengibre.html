@@ -256,20 +256,22 @@ let n401=0,nNet=0;
 async function tick(){
   let wait=0;
   try{
+    dbg("Solicitando token de acceso…");
     const tok=await access();
-    const r=await fetchT(PLAYBACK_ENDPOINT,{headers:{Authorization:"Bearer "+tok}});
+    dbg("Token recibido; consultando reproducción…");
+    const r=await fetchT(PLAYBACK_ENDPOINT+"?additional_types=track,episode&_="+Date.now(),{headers:{Authorization:"Bearer "+tok},cache:"no-store"},10000);
     dbg("Spotify respondió HTTP "+r.status+(r.status===204?" (no hay reproducción activa en esta cuenta)":""));
     nNet=0;if(r.status!==401)n401=0;
     if(r.status===204)setTrack(null);
-    else if(r.status===401){AT=null;if(++n401>=3)setError("Reconecta Spotify","Token rechazado (401)")}
+    else if(r.status===401){AT=null;setError("Spotify: error 401","Autorización rechazada · Reconecta tu cuenta");if(++n401>=3)wait=20000}
     else if(r.status===429){
       let ra=+r.headers.get("Retry-After")||5,why="";
       try{why=(await r.json()).reason||""}catch(e){}
       wait=Math.max(ra,why?30:5)*1000;
-      if(why||ra>10)setError("Spotify: límite de uso","Reintento en "+Math.round(wait/1000)+" s"+(why?" · "+why:""))}
+      setError("Spotify: error 429","Límite de consultas · Reintento en "+Math.round(wait/1000)+" s"+(why?" · "+why:""))}
     else if(r.status===403){let m="";try{const er=await r.json();m=er?.error?.message||er?.error_description||""}catch(e){}
       console.warn("[gingerbread] 403",m);setError("Spotify: acceso denegado",m||"403: revisa User Management, Premium y API");wait=15000}
-    else if(!r.ok){setError("Spotify: error "+r.status,"Reintentando…");wait=8000}
+    else if(!r.ok){let details="";try{details=JSON.stringify(await r.json()).slice(0,140)}catch(_){}setError("Spotify: error "+r.status,details||"Reintentando…");wait=8000}
     else{
       const j=await r.json(),it=j.item;
       if(!it)setTrack(null);
@@ -280,8 +282,8 @@ async function tick(){
   }catch(e){
     dbg("Error: "+(e.name==="AbortError"?"tiempo de espera agotado":e.message));
     wait=6000;
-    if(e.kind==="token")setError("Reconecta Spotify",e.code==="invalid_grant"?"El enlace caducó: genera uno nuevo":e.message);
-    else if(++nNet>=2||curId===null)setError("Sin conexión",(e.name==="AbortError"?"Spotify no responde":String(e.message)).slice(0,60))}   /* un fallo aislado de red no tapa la canción */
+    if(e.kind==="token")setError("Reconecta Spotify",e.code==="invalid_grant"?"El enlace caducó: genera uno nuevo":"Error de token: "+e.message);
+    else setError("Sin conexión",(e.name==="AbortError"?"Spotify no responde":String(e.message)).slice(0,85))}   /* un fallo aislado de red no tapa la canción */
   setTimeout(tick,wait||(S&&S.playing?CONFIG.POLL_MS:CONFIG.IDLE_POLL_MS))}
 
 /* ---- arranque ---- */
@@ -292,7 +294,7 @@ if(q.get("demo")){
   setTrack({id:"demo",title:"Navidad de jengibre",artist:"Vista previa animada · Spotify",dur:185000,prog:0,playing:true,t:performance.now()});
   setInterval(()=>{demo=(demo+1)%185;setTrack({id:"demo",title:"Navidad de jengibre",artist:"Vista previa animada · Spotify",dur:185000,prog:demo*1000,playing:true,t:performance.now()})},1000);
 }else if(q.get("code")||q.has("setup")||!(cid()&&RT0))setup();
-else{setText($("#title"),"Conectando…");setText($("#artist"),"Spotify");dbg("Iniciando…");tick()}
+else{setText($("#title"),"Conectando…");setText($("#artist"),"Esperando respuesta de Spotify");dbg("Iniciando…");setTimeout(()=>{if(curId===null){setText($("#artist"),"Consultando API · añade &debug para ver detalles")}},12000);tick()}
 </script>
 </body>
 </html>
