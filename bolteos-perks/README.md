@@ -4,7 +4,11 @@
 
 El panel, los 324 iconos, el catálogo en español, los diseños de las cartas, la fuente y los audios están incluidos en esta carpeta.
 
-## Usar en OBS y Stream Deck
+## Repartir en OBS sin instalar nada
+
+Abre el panel, elige tus ajustes y copia el enlace a una fuente Navegador. Al cargar o actualizar esa fuente se reparten cuatro cartas. En OBS → Ajustes → Atajos puedes asignar una combinación a la actualización de la fuente y usarla también desde Stream Deck. Si cambias los ajustes, vuelve a copiar el enlace.
+
+## Conector opcional para controlar el reparto desde el panel
 
 1. Descarga [Bolteos_Perks_Directo.zip](./Bolteos_Perks_Directo.zip) en el PC del stream y extrae todos los archivos en una carpeta.
 2. Con Python 3 instalado, abre **Iniciar directo.bat**. El conector escucha en el equipo local y abre el panel con la sala asignada.

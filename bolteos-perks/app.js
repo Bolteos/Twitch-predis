@@ -1,5 +1,6 @@
 'use strict';
-const $=id=>document.getElementById(id),query=new URLSearchParams(location.search),overlay=query.has('overlay'), live=query.has('directo') || overlay;
+const $=id=>document.getElementById(id),query=new URLSearchParams(location.search),simple=query.get('modo')==='reparto', overlay=simple || query.has('overlay'), live=!simple && (query.has('directo') || overlay);
+if(live)document.documentElement.classList.add('legacy-live');
 if(overlay)document.documentElement.classList.add('overlay');
 let room=query.get('room')||localStorage.getItem('circus-room');
 if(!/^[a-f0-9]{32}$/.test(room||'')){room=crypto.randomUUID().replaceAll('-','');localStorage.setItem('circus-room',room)}
@@ -18,7 +19,32 @@ installFontControl();
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 function options(){return{role:prefs.role,volume:+$('volume').value,duration:+$('duration').value,zoom:+$('zoom').value,deckZoom:+$('deckzoom').value,hideDeck:$('hideDeck').checked,animation:$('animation').value,pace:+$('pace').value,font:$('font').value,nameScale:+$('nameScale').value}}
 function applyPrefs(p){prefs={...defaults,...p};$('volume').value=prefs.volume;$('duration').value=prefs.duration;$('zoom').value=prefs.zoom;$('deckzoom').value=prefs.deckZoom;$('hideDeck').checked=!!prefs.hideDeck;$('animation').value=prefs.animation;$('pace').value=prefs.pace;$('font').value=prefs.font;$('nameScale').value=prefs.nameScale;applyFont(prefs.font);applyNameScale(prefs.nameScale);$('voltext').textContent=prefs.volume+'%';$('zoomtext').textContent=prefs.zoom+'%';$('deckzoomtext').textContent=prefs.deckZoom+'%';document.querySelectorAll('[data-role]').forEach(b=>b.classList.toggle('selected',b.dataset.role===prefs.role));$('count').textContent=perks.filter(p=>p.role===prefs.role).length+' perks en este mazo';updateLinks()}
-function updateLinks(){const h=+$('resolution').value;$('obsdimensions').textContent=(h===2160?'3840 × 2160':'1920 × 1080');$('obsurl').value=new URL('./',location.href).href+'?overlay=1&room='+room+'&resolution='+h;$('triggerurl').value='http://127.0.0.1:17842/api/trigger?room='+room;const triggerBox=$('triggerurl').closest('.linkbox'),triggerHint=triggerBox?.querySelector('p');if(triggerHint)triggerHint.textContent='Usa una acción de solicitud HTTP con método GET. Este enlace envía la orden sin abrir una página.';document.querySelectorAll('.help li').forEach(item=>{if(item.textContent.includes('En Stream Deck:'))item.textContent='En Stream Deck: usa una acción o plugin de solicitud HTTP, selecciona el método GET y pega el enlace de activación. No uses Sistema → Sitio web, porque esa acción siempre abre el navegador.'})}
+function simpleLink(settings, height) {
+  const url = new URL('./', location.href);
+  url.searchParams.set('modo','reparto');
+  for (const [key,value] of Object.entries(settings)) {
+    if (value !== defaults[key]) url.searchParams.set(key,String(value));
+  }
+  if (height === 2160) url.searchParams.set('resolution','2160');
+  return url.href;
+}
+function simpleSettings() {
+  const result = {...defaults};
+  const fields = {volume:'volume',duration:'duration',zoom:'zoom',deckZoom:'deckzoom',animation:'animation',pace:'pace',font:'font',nameScale:'nameScale'};
+  for (const [key,id] of Object.entries(fields)) {
+    if (!query.has(key)) continue;
+    const field = $(id);
+    field.value = query.get(key);
+    if (field.value !== '') result[key] = typeof defaults[key] === 'number' ? Number(field.value) : field.value;
+  }
+  result.role = query.get('role') === 'killer' ? 'killer' : 'survivor';
+  result.hideDeck = query.get('hideDeck') !== 'false';
+  return result;
+}
+function updateLinks(){const h=+$('resolution').value;$('obsdimensions').textContent=(h===2160?'3840 × 2160':'1920 × 1080');if(!live){
+  $('obsurl').value=simpleLink(prefs,h);
+  return;
+} $('obsurl').value=new URL('./',location.href).href+'?overlay=1&room='+room+'&resolution='+h;$('triggerurl').value='http://127.0.0.1:17842/api/trigger?room='+room;const triggerBox=$('triggerurl').closest('.linkbox'),triggerHint=triggerBox?.querySelector('p');if(triggerHint)triggerHint.textContent='Usa una acción de solicitud HTTP con método GET. Este enlace envía la orden sin abrir una página.';document.querySelectorAll('.help li').forEach(item=>{if(item.textContent.includes('En Stream Deck:'))item.textContent='En Stream Deck: usa una acción o plugin de solicitud HTTP, selecciona el método GET y pega el enlace de activación. No uses Sistema → Sitio web, porque esa acción siempre abre el navegador.'})}
 function resize(){const v=$('viewport'),scale=Math.min(v.clientWidth/1920,v.clientHeight/1080);$('stage').style.transform=overlay?'translate(-50%,-50%) scale('+scale+')':'scale('+scale+')'}
 new ResizeObserver(resize).observe($('viewport'));
 function zoomSize(zoom){const z=zoom/100,s=$('stage').style;s.setProperty('--zoom',z);for(const[k,n]of [['cw',250],['ch',390],['icon',185],['name',26],['pad',20],['radius',14]])s.setProperty('--'+k,n*z+'px')}
@@ -143,4 +169,12 @@ function changed(){saveVersion++;prefs={...options()};applyPrefs(prefs);staticHa
 async function send(action){$('notice').textContent='Enviando…';try{await saveSettings();const e=await request('/api/control?room='+room,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...options()})});last=e.id;await animate(e);$('notice').textContent=action==='hide'?'Cartas ocultas.':(live?'Reparto enviado al overlay.':'Reparto en la mesa.')}catch(e){$('notice').textContent=e.message;$('deal').disabled=busy}}
 async function poll(){try{const e=await request('/api/state?room='+room);$('connection').textContent=live?'Directo conectado':'Modo web';if(e.settings&&!settingsDirty&&JSON.stringify(e.settings)!==JSON.stringify(prefs)){applyPrefs(e.settings);if(!busy)staticHand()}if(e.id&&e.id!==last){const first=!last;last=e.id;if(!first||Date.now()-e.at<7000)animate(e).catch(()=>{$('notice').textContent='No se pudo completar la animación.';hide()})}}catch(e){$('connection').textContent='Sin conexión';if(!overlay)$('notice').textContent=e.message}if(live)setTimeout(poll,700)}
 document.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>{prefs.role=b.dataset.role;changed()});for(const id of ['volume','duration','animation','pace','zoom','deckzoom','hideDeck'])$(id).addEventListener(id==='volume'||id==='zoom'||id==='deckzoom'?'input':'change',changed);document.querySelectorAll('[data-catalog-role]').forEach(b=>b.onclick=()=>{catalogRole=b.dataset.catalogRole;document.querySelectorAll('[data-catalog-role]').forEach(x=>x.classList.toggle('selected',x===b));renderCatalog()});$('resolution').onchange=()=>{localStorage.setItem('circus-resolution',$('resolution').value);updateLinks()};$('deal').onclick=()=>send('deal');$('clear').onclick=()=>send('hide');$('demo').onclick=()=>{const o=options(),styles=['classic','cascade','fan','orbit'];animate({action:'deal',localPreview:true,ids:sample(o.role),...o,style:o.animation==='random'?styles[Math.floor(Math.random()*4)]:o.animation}).catch(()=>hide())};document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{const input=$(b.dataset.copy);try{await navigator.clipboard.writeText(input.value);b.textContent='Copiado';setTimeout(()=>b.textContent='Copiar',1500)}catch{input.select();$('notice').textContent='Copia el enlace seleccionado con Ctrl+C.'}});
-(async()=>{try{perks=await request('/api/perks');$('total').textContent=perks.length;renderCatalog();const state=await request('/api/state?room='+room);applyPrefs(state.settings||defaults);$('resolution').value=query.get('resolution')==='2160'||localStorage.getItem('circus-resolution')==='2160'?'2160':'1080';updateLinks();if(overlay)$('stage').classList.add('hidden');else{buildCards(sample(prefs.role));staticHand()}initialized=true;resize();poll()}catch(e){$('notice').textContent=e.message;$('connection').textContent=live?'Abre el conector y permite el acceso a la red local.':'No se pudo cargar el mazo'}})();
+(async()=>{try{perks=await request('/api/perks');$('total').textContent=perks.length;renderCatalog();if(simple){
+  applyPrefs(simpleSettings());
+  $('stage').classList.add('hidden');
+  initialized=true;
+  resize();
+  const styles=['classic','cascade','fan','orbit'];
+  await animate({...prefs,ids:sample(prefs.role),style:prefs.animation==='random'?styles[Math.floor(Math.random()*4)]:prefs.animation});
+  return;
+}const state=await request('/api/state?room='+room);applyPrefs(state.settings||defaults);$('resolution').value=query.get('resolution')==='2160'||localStorage.getItem('circus-resolution')==='2160'?'2160':'1080';updateLinks();if(overlay)$('stage').classList.add('hidden');else{buildCards(sample(prefs.role));staticHand()}initialized=true;resize();poll()}catch(e){$('notice').textContent=e.message;$('connection').textContent=live?'Abre el conector y permite el acceso a la red local.':'No se pudo cargar el mazo'}})();
